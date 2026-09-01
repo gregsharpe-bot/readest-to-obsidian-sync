@@ -76,9 +76,10 @@ data "aws_iam_policy_document" "this" {
   }
 
   statement {
-    sid = "ReadAndWritePermittedObjects"
+    sid = "ManagePermittedObjects"
 
     actions = [
+      "s3:DeleteObject",
       "s3:GetObject",
       "s3:PutObject",
     ]
