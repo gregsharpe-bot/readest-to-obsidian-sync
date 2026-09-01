@@ -3,13 +3,13 @@ variable "user_name" {
   type        = string
 }
 
-variable "sqs_queue_arn" {
-  description = "ARN of the SQS queue the workload consumes."
+variable "sqs_queue_name" {
+  description = "Name for the SQS queue created for the workload."
   type        = string
 }
 
-variable "s3_bucket_arn" {
-  description = "ARN of the S3 bucket, without an object prefix."
+variable "s3_bucket_name" {
+  description = "Globally unique name for the S3 bucket created for the workload."
   type        = string
 }
 

@@ -1,8 +1,8 @@
 # readest-to-obsidian-sync
 
-Terraform for the AWS credentials used by the Readest-to-Obsidian sync workload.
+Terraform for the AWS resources and credentials used by the Readest-to-Obsidian sync workload.
 
-It creates one IAM user, an access key, and a least-privilege policy that permits:
+It creates a private S3 bucket, an encrypted SQS queue, one IAM user, an access key, and a least-privilege policy that permits:
 
 - Receiving, deleting, and extending visibility of messages from one SQS queue.
 - Listing a chosen prefix in one S3 bucket.
@@ -11,7 +11,7 @@ It creates one IAM user, an access key, and a least-privilege policy that permit
 ## Usage
 
 1. Configure an encrypted, access-controlled remote Terraform backend before applying. Terraform state contains the generated AWS secret access key.
-2. Copy `infra/terraform.tfvars.example` to `infra/terraform.tfvars` and fill in the resource ARNs and names.
+2. Copy `infra/terraform.tfvars.example` to `infra/terraform.tfvars` and supply globally unique bucket and queue names.
 3. From `infra`, run:
 
    ```sh

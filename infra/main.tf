@@ -17,8 +17,8 @@ module "sync_credentials" {
   source = "./modules/s3-sqs-iam"
 
   user_name                = var.user_name
-  sqs_queue_arn            = var.sqs_queue_arn
-  s3_bucket_arn            = var.s3_bucket_arn
+  sqs_queue_name           = var.sqs_queue_name
+  s3_bucket_name           = var.s3_bucket_name
   s3_prefix                = var.s3_prefix
   permissions_boundary_arn = var.permissions_boundary_arn
   tags                     = var.tags

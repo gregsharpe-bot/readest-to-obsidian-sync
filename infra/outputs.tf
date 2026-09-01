@@ -13,3 +13,13 @@ output "iam_user_arn" {
   description = "ARN of the dedicated IAM user."
   value       = module.sync_credentials.iam_user_arn
 }
+
+output "s3_bucket_name" {
+  description = "Name of the S3 bucket created for the workload."
+  value       = module.sync_credentials.s3_bucket_name
+}
+
+output "sqs_queue_url" {
+  description = "URL of the SQS queue created for the workload."
+  value       = module.sync_credentials.sqs_queue_url
+}
