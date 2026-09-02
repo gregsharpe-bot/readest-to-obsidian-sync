@@ -1,0 +1,10 @@
+aws_region     = "eu-west-2"
+user_name      = "readest-to-obsidian-sync"
+sqs_queue_name = "readest-to-obsidian-sync"
+s3_bucket_name = "example-readest-to-obsidian-sync"
+s3_prefix      = "readest-to-obsidian/"
+
+tags = {
+  Application = "readest-to-obsidian-sync"
+  ManagedBy   = "Terraform"
+}

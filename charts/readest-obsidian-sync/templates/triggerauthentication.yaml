@@ -1,0 +1,14 @@
+{{- if and .Values.keda.enabled .Values.existingSecret }}
+apiVersion: keda.sh/v1alpha1
+kind: TriggerAuthentication
+metadata:
+  name: {{ include "readest-obsidian-sync.fullname" . }}
+spec:
+  secretTargetRef:
+    - parameter: awsAccessKeyID
+      name: {{ .Values.existingSecret }}
+      key: AWS_ACCESS_KEY_ID
+    - parameter: awsSecretAccessKey
+      name: {{ .Values.existingSecret }}
+      key: AWS_SECRET_ACCESS_KEY
+{{- end }}
