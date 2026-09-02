@@ -37,9 +37,68 @@ resource "aws_s3_bucket_server_side_encryption_configuration" "this" {
 }
 
 resource "aws_sqs_queue" "this" {
-  name                    = var.sqs_queue_name
-  sqs_managed_sse_enabled = true
-  tags                    = var.tags
+  name                       = var.sqs_queue_name
+  sqs_managed_sse_enabled    = true
+  visibility_timeout_seconds = 300
+  receive_wait_time_seconds  = 20
+  redrive_policy = jsonencode({
+    deadLetterTargetArn = aws_sqs_queue.dlq.arn
+    maxReceiveCount     = 5
+  })
+  tags = var.tags
+}
+
+resource "aws_sqs_queue" "dlq" {
+  name                       = "${var.sqs_queue_name}-dlq"
+  sqs_managed_sse_enabled    = true
+  message_retention_seconds  = 1209600
+  visibility_timeout_seconds = 300
+  tags                       = var.tags
+}
+
+data "aws_caller_identity" "current" {}
+
+data "aws_iam_policy_document" "sqs_queue" {
+  statement {
+    sid    = "AllowS3BucketNotifications"
+    effect = "Allow"
+
+    principals {
+      type        = "Service"
+      identifiers = ["s3.amazonaws.com"]
+    }
+
+    actions   = ["sqs:SendMessage"]
+    resources = [aws_sqs_queue.this.arn]
+
+    condition {
+      test     = "ArnLike"
+      variable = "aws:SourceArn"
+      values   = [aws_s3_bucket.this.arn]
+    }
+
+    condition {
+      test     = "StringEquals"
+      variable = "aws:SourceAccount"
+      values   = [data.aws_caller_identity.current.account_id]
+    }
+  }
+}
+
+resource "aws_sqs_queue_policy" "this" {
+  queue_url = aws_sqs_queue.this.url
+  policy    = data.aws_iam_policy_document.sqs_queue.json
+}
+
+resource "aws_s3_bucket_notification" "this" {
+  bucket = aws_s3_bucket.this.id
+
+  queue {
+    queue_arn = aws_sqs_queue.this.arn
+    events    = ["s3:ObjectCreated:*", "s3:ObjectRemoved:*"]
+  }
+
+  depends_on = [aws_sqs_queue_policy.this]
 }
 
 data "aws_iam_policy_document" "this" {
@@ -50,6 +109,7 @@ data "aws_iam_policy_document" "this" {
       "sqs:ChangeMessageVisibility",
       "sqs:DeleteMessage",
       "sqs:GetQueueAttributes",
+      "sqs:GetQueueUrl",
       "sqs:ReceiveMessage",
     ]
 

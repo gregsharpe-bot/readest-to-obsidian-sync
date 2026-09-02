@@ -1,0 +1,60 @@
+{{- if .Values.keda.enabled }}
+apiVersion: keda.sh/v1alpha1
+kind: ScaledJob
+metadata:
+  name: {{ include "readest-obsidian-sync.fullname" . }}
+  labels:
+    app.kubernetes.io/name: {{ include "readest-obsidian-sync.name" . }}
+spec:
+  pollingInterval: {{ .Values.keda.pollingInterval }}
+  maxReplicaCount: {{ .Values.keda.maxReplicaCount }}
+  jobTargetRef:
+    backoffLimit: {{ .Values.job.backoffLimit }}
+    activeDeadlineSeconds: {{ .Values.job.activeDeadlineSeconds }}
+    template:
+      spec:
+        serviceAccountName: {{ include "readest-obsidian-sync.serviceAccountName" . }}
+        restartPolicy: Never
+        containers:
+          - name: readest-obsidian-sync
+            image: "{{ .Values.image.repository }}:{{ default .Chart.AppVersion .Values.image.tag }}"
+            imagePullPolicy: {{ .Values.image.pullPolicy }}
+            args: ["run"]
+            {{- if .Values.configMap.create }}
+            envFrom:
+              - configMapRef:
+                  name: {{ default (include "readest-obsidian-sync.fullname" .) .Values.configMap.name }}
+            {{- end }}
+            env:
+              - name: AWS_REGION
+                value: {{ required "aws.region is required" .Values.aws.region | quote }}
+              - name: SQS_QUEUE_URL
+                value: {{ required "aws.sqsQueueUrl is required" .Values.aws.sqsQueueUrl | quote }}
+              - name: S3_BUCKET
+                value: {{ required "aws.s3Bucket is required" .Values.aws.s3Bucket | quote }}
+              {{- if .Values.existingSecret }}
+              - name: AWS_ACCESS_KEY_ID
+                valueFrom:
+                  secretKeyRef:
+                    name: {{ .Values.existingSecret }}
+                    key: AWS_ACCESS_KEY_ID
+              - name: AWS_SECRET_ACCESS_KEY
+                valueFrom:
+                  secretKeyRef:
+                    name: {{ .Values.existingSecret }}
+                    key: AWS_SECRET_ACCESS_KEY
+              {{- end }}
+            resources:
+              {{- toYaml .Values.resources | nindent 14 }}
+  triggers:
+    - type: aws-sqs-queue
+      metadata:
+        queueURL: {{ required "aws.sqsQueueUrl is required" .Values.aws.sqsQueueUrl | quote }}
+        awsRegion: {{ required "aws.region is required" .Values.aws.region | quote }}
+        queueLength: {{ .Values.keda.queueLength | quote }}
+        identityOwner: operator
+      {{- if .Values.existingSecret }}
+      authenticationRef:
+        name: {{ include "readest-obsidian-sync.fullname" . }}
+      {{- end }}
+{{- end }}

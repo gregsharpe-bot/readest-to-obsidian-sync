@@ -1,0 +1,38 @@
+image:
+  repository: ghcr.io/example/readest-obsidian-sync
+  tag: ""
+  pullPolicy: IfNotPresent
+
+aws:
+  region: ""
+  sqsQueueUrl: ""
+  s3Bucket: ""
+
+keda:
+  enabled: true
+  pollingInterval: 10
+  maxReplicaCount: 1
+  queueLength: 1
+
+job:
+  backoffLimit: 3
+  activeDeadlineSeconds: 300
+
+resources:
+  requests:
+    cpu: 10m
+    memory: 32Mi
+  limits:
+    memory: 128Mi
+
+serviceAccount:
+  create: true
+  name: ""
+  annotations: {}
+
+existingSecret: ""
+
+configMap:
+  create: false
+  name: ""
+  data: {}

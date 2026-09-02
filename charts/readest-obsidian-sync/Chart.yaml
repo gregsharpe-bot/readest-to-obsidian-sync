@@ -1,0 +1,6 @@
+apiVersion: v2
+name: readest-obsidian-sync
+description: KEDA ScaledJob for the Readest to Obsidian SQS worker
+type: application
+version: 0.1.0
+appVersion: "0.1.0"

@@ -23,3 +23,18 @@ output "sqs_queue_url" {
   description = "URL of the SQS queue created for the workload."
   value       = aws_sqs_queue.this.url
 }
+
+output "sqs_queue_arn" {
+  description = "ARN of the SQS queue created for the workload."
+  value       = aws_sqs_queue.this.arn
+}
+
+output "sqs_dlq_url" {
+  description = "URL of the SQS dead-letter queue."
+  value       = aws_sqs_queue.dlq.url
+}
+
+output "sqs_dlq_arn" {
+  description = "ARN of the SQS dead-letter queue."
+  value       = aws_sqs_queue.dlq.arn
+}
