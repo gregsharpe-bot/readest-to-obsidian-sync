@@ -73,4 +73,6 @@ The Terraform module creates a standard encrypted SQS queue and permits the S3 s
 
 ## Validation And Releases
 
-Run `make test`, `make vet`, `make build`, `make helm-lint`, and `make helm-template` locally. GitHub Actions repeats Go, Docker, Helm, and Terraform validation. Version `0.1.0` is used by the initial binary/image/chart contract; deployment consumers should pin image and chart versions rather than use `latest`. Publishing to GHCR is intentionally not configured because no publishing credentials are stored here.
+Run `make test`, `make vet`, `make build`, `make helm-lint`, and `make helm-template` locally. GitHub Actions repeats Go, Docker, Helm, and Terraform validation. Version `0.1.0` is used by the initial binary/image/chart contract; deployment consumers should pin image and chart versions rather than use `latest`.
+
+The release workflow runs after pushes to `main`. It publishes a multi-architecture image to `ghcr.io/<owner>/readest-obsidian-sync:0.1.0-main.<commit-sha>` and the matching Helm chart to `oci://ghcr.io/<owner>/charts`. It authenticates with the repository-provided `GITHUB_TOKEN`; no publishing credentials are stored here.
