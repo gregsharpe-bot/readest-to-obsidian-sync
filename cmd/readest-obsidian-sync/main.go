@@ -9,9 +9,11 @@ import (
 	"syscall"
 
 	awsconfig "github.com/aws/aws-sdk-go-v2/config"
+	awss3 "github.com/aws/aws-sdk-go-v2/service/s3"
 	awssqs "github.com/aws/aws-sdk-go-v2/service/sqs"
 
 	"github.com/gregsharpe-bot/readest-to-obsidian-sync/internal/config"
+	"github.com/gregsharpe-bot/readest-to-obsidian-sync/internal/reconcile"
 	workersqs "github.com/gregsharpe-bot/readest-to-obsidian-sync/internal/sqs"
 )
 
@@ -36,6 +38,14 @@ func main() {
 		QueueURL: cfg.QueueURL,
 		Bucket:   cfg.S3Bucket,
 		Logger:   logger,
+		Processor: reconcile.Syncer{
+			Store:       awss3.NewFromConfig(awsCfg),
+			Bucket:      cfg.S3Bucket,
+			Vault:       cfg.ObsidianVault,
+			NotesFolder: cfg.NotesFolder,
+			RunCommand:  reconcile.ExecCommand,
+		},
+		AcknowledgeFailures: true,
 	}
 	ctx, stop := signal.NotifyContext(context.Background(), syscall.SIGINT, syscall.SIGTERM)
 	defer stop()

@@ -6,9 +6,11 @@ import (
 )
 
 type Config struct {
-	AWSRegion string
-	QueueURL  string
-	S3Bucket  string
+	AWSRegion     string
+	QueueURL      string
+	S3Bucket      string
+	ObsidianVault string
+	NotesFolder   string
 }
 
 func FromEnvironment() (Config, error) {
@@ -32,6 +34,14 @@ func FromEnvironment() (Config, error) {
 	}
 	if len(missing) > 0 {
 		return Config{}, fmt.Errorf("missing required environment variables: %v", missing)
+	}
+	cfg.ObsidianVault = os.Getenv("OBSIDIAN_VAULT")
+	if cfg.ObsidianVault == "" {
+		cfg.ObsidianVault = "/var/lib/obsidian-vault"
+	}
+	cfg.NotesFolder = os.Getenv("OBSIDIAN_NOTES_FOLDER")
+	if cfg.NotesFolder == "" {
+		cfg.NotesFolder = "07 - Inbox"
 	}
 	return cfg, nil
 }

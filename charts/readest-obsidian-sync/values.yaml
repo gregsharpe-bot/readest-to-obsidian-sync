@@ -36,3 +36,16 @@ configMap:
   create: false
   name: ""
   data: {}
+
+vault:
+  createPvc: true
+  existingClaim: ""
+  storageClassName: ""
+  accessModes:
+    - ReadWriteOnce
+  size: 1Gi
+  mountPath: /var/lib/obsidian-vault
+
+obsidian:
+  notesFolder: 07 - Inbox
+  setupWaitSeconds: 10
