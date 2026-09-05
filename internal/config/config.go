@@ -3,12 +3,14 @@ package config
 import (
 	"fmt"
 	"os"
+	"strings"
 )
 
 type Config struct {
 	AWSRegion     string
 	QueueURL      string
 	S3Bucket      string
+	S3Prefix      string
 	ObsidianVault string
 	NotesFolder   string
 }
@@ -35,6 +37,7 @@ func FromEnvironment() (Config, error) {
 	if len(missing) > 0 {
 		return Config{}, fmt.Errorf("missing required environment variables: %v", missing)
 	}
+	cfg.S3Prefix = strings.Trim(os.Getenv("S3_PREFIX"), "/")
 	cfg.ObsidianVault = os.Getenv("OBSIDIAN_VAULT")
 	if cfg.ObsidianVault == "" {
 		cfg.ObsidianVault = "/var/lib/obsidian-vault"
