@@ -1,0 +1,17 @@
+{{- if and .Values.vault.createPvc (not .Values.vault.existingClaim) }}
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: {{ include "readest-obsidian-sync.fullname" . }}
+  labels:
+    app.kubernetes.io/name: {{ include "readest-obsidian-sync.name" . }}
+spec:
+  accessModes:
+    {{- toYaml .Values.vault.accessModes | nindent 4 }}
+  resources:
+    requests:
+      storage: {{ .Values.vault.size }}
+  {{- with .Values.vault.storageClassName }}
+  storageClassName: {{ . | quote }}
+  {{- end }}
+{{- end }}

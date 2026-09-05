@@ -13,6 +13,9 @@ func TestFromEnvironment(t *testing.T) {
 	if got.AWSRegion != "eu-west-2" || got.QueueURL == "" || got.S3Bucket != "books" {
 		t.Fatalf("unexpected config: %+v", got)
 	}
+	if got.NotesFolder != "Readest" {
+		t.Fatalf("NotesFolder = %q, want Readest", got.NotesFolder)
+	}
 }
 
 func TestFromEnvironmentRequiresAllValues(t *testing.T) {

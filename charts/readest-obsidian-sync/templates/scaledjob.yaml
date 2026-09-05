@@ -15,6 +15,25 @@ spec:
       spec:
         serviceAccountName: {{ include "readest-obsidian-sync.serviceAccountName" . }}
         restartPolicy: Never
+        initContainers:
+          - name: obsidian-setup
+            image: "{{ .Values.image.repository }}:{{ default .Chart.AppVersion .Values.image.tag }}"
+            imagePullPolicy: {{ .Values.image.pullPolicy }}
+            command: ["sh", "-c"]
+            args:
+              - >-
+                until ob sync-status --path "$OBSIDIAN_VAULT" >/dev/null 2>&1; do
+                  echo "Waiting for Obsidian login and sync setup on the vault PVC";
+                  sleep {{ .Values.obsidian.setupWaitSeconds }};
+                done
+            env:
+              - name: OBSIDIAN_VAULT
+                value: {{ .Values.vault.mountPath | quote }}
+              - name: HOME
+                value: {{ printf "%s/.obsidian-headless-home" .Values.vault.mountPath | quote }}
+            volumeMounts:
+              - name: obsidian-vault
+                mountPath: {{ .Values.vault.mountPath | quote }}
         containers:
           - name: readest-obsidian-sync
             image: "{{ .Values.image.repository }}:{{ default .Chart.AppVersion .Values.image.tag }}"
@@ -32,6 +51,12 @@ spec:
                 value: {{ required "aws.sqsQueueUrl is required" .Values.aws.sqsQueueUrl | quote }}
               - name: S3_BUCKET
                 value: {{ required "aws.s3Bucket is required" .Values.aws.s3Bucket | quote }}
+              - name: OBSIDIAN_VAULT
+                value: {{ .Values.vault.mountPath | quote }}
+              - name: OBSIDIAN_NOTES_FOLDER
+                value: {{ .Values.obsidian.notesFolder | quote }}
+              - name: HOME
+                value: {{ printf "%s/.obsidian-headless-home" .Values.vault.mountPath | quote }}
               {{- if .Values.existingSecret }}
               - name: AWS_ACCESS_KEY_ID
                 valueFrom:
@@ -46,6 +71,13 @@ spec:
               {{- end }}
             resources:
               {{- toYaml .Values.resources | nindent 14 }}
+            volumeMounts:
+              - name: obsidian-vault
+                mountPath: {{ .Values.vault.mountPath | quote }}
+        volumes:
+          - name: obsidian-vault
+            persistentVolumeClaim:
+              claimName: {{ default (include "readest-obsidian-sync.fullname" .) .Values.vault.existingClaim }}
   triggers:
     - type: aws-sqs-queue
       metadata:

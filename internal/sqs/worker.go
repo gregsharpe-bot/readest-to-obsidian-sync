@@ -2,6 +2,7 @@ package sqs
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"log/slog"
 
@@ -16,11 +17,17 @@ type Client interface {
 	DeleteMessage(context.Context, *awssqs.DeleteMessageInput, ...func(*awssqs.Options)) (*awssqs.DeleteMessageOutput, error)
 }
 
+type Processor interface {
+	Process(context.Context, events.Record) error
+}
+
 type Worker struct {
-	Client   Client
-	QueueURL string
-	Bucket   string
-	Logger   *slog.Logger
+	Client              Client
+	QueueURL            string
+	Bucket              string
+	Logger              *slog.Logger
+	Processor           Processor
+	AcknowledgeFailures bool
 }
 
 func (w Worker) Run(ctx context.Context) error {
@@ -54,6 +61,7 @@ func (w Worker) handleMessage(ctx context.Context, message types.Message) error 
 	if err != nil {
 		return err
 	}
+	var processingErr error
 	for _, record := range notification.Records {
 		if w.Bucket != "" && record.S3.Bucket.Name != w.Bucket {
 			return fmt.Errorf("event bucket %q does not match configured bucket", record.S3.Bucket.Name)
@@ -69,12 +77,20 @@ func (w Worker) handleMessage(ctx context.Context, message types.Message) error 
 			fields = append(fields, "s3_object_size", *record.S3.Object.Size)
 		}
 		w.Logger.Info("received S3 event", fields...)
+		if w.Processor != nil {
+			if err := w.Processor.Process(ctx, record); err != nil {
+				processingErr = errors.Join(processingErr, err)
+			}
+		}
+	}
+	if processingErr != nil && !w.AcknowledgeFailures {
+		return processingErr
 	}
 	_, err = w.Client.DeleteMessage(ctx, &awssqs.DeleteMessageInput{
 		QueueUrl:      &w.QueueURL,
 		ReceiptHandle: message.ReceiptHandle,
 	})
-	return err
+	return errors.Join(processingErr, err)
 }
 
 func value(value *string) string {
