@@ -47,5 +47,5 @@ vault:
   mountPath: /var/lib/obsidian-vault
 
 obsidian:
-  notesFolder: 07 - Inbox
+  notesFolder: Readest
   setupWaitSeconds: 10

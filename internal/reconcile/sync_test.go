@@ -33,7 +33,7 @@ func TestSyncWritesBookNoteAndRunsObsidianSync(t *testing.T) {
 		Store:       store,
 		Bucket:      "books",
 		Vault:       vault,
-		NotesFolder: "07 - Inbox",
+		NotesFolder: "Readest",
 		RunCommand: func(_ context.Context, name string, args ...string) error {
 			command = name + " " + args[0] + " " + args[1]
 			return nil
@@ -43,7 +43,7 @@ func TestSyncWritesBookNoteAndRunsObsidianSync(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	data, err := os.ReadFile(filepath.Join(vault, "07 - Inbox", "A Book [book-1].md"))
+	data, err := os.ReadFile(filepath.Join(vault, "Readest", "A Book [book-1].md"))
 	if err != nil {
 		t.Fatal(err)
 	}

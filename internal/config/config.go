@@ -41,7 +41,7 @@ func FromEnvironment() (Config, error) {
 	}
 	cfg.NotesFolder = os.Getenv("OBSIDIAN_NOTES_FOLDER")
 	if cfg.NotesFolder == "" {
-		cfg.NotesFolder = "07 - Inbox"
+		cfg.NotesFolder = "Readest"
 	}
 	return cfg, nil
 }
