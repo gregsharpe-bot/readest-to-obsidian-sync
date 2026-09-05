@@ -41,7 +41,7 @@ go build ./...
 go run ./cmd/readest-obsidian-sync run
 ```
 
-The worker requires `AWS_REGION`, `SQS_QUEUE_URL`, and `S3_BUCKET`. It optionally accepts `OBSIDIAN_VAULT` (default `/var/lib/obsidian-vault`) and `OBSIDIAN_NOTES_FOLDER` (default `Readest`). It uses the AWS SDK default credential chain, long polls in batches of up to ten messages, logs structured JSON, writes notes atomically, runs `ob sync`, deletes messages after processing, and exits after an empty poll. Sync failures are logged but acknowledged by design; the locally written note remains on the PVC.
+The worker requires `AWS_REGION`, `SQS_QUEUE_URL`, and `S3_BUCKET`. It optionally accepts `S3_PREFIX` (the Readest object prefix, such as `Readest`), `OBSIDIAN_VAULT` (default `/var/lib/obsidian-vault`), and `OBSIDIAN_NOTES_FOLDER` (default `Readest`). It uses the AWS SDK default credential chain, long polls in batches of up to ten messages, logs structured JSON, writes notes atomically, runs `ob sync`, deletes messages after processing, and exits after an empty poll. Sync failures are logged but acknowledged by design; the locally written note remains on the PVC.
 
 An S3 notification message has a `Records` array containing `eventSource: "aws:s3"`, `eventName`, `eventTime`, and nested bucket/object fields. The worker logs one event per record, including URL-decoded object keys and object size where available. Duplicate and out-of-order notifications are safe because each sync regenerates the same deterministic note.
 

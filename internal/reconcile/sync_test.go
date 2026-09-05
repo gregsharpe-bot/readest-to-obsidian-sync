@@ -56,6 +56,26 @@ func TestSyncWritesBookNoteAndRunsObsidianSync(t *testing.T) {
 	}
 }
 
+func TestSyncSupportsS3Prefix(t *testing.T) {
+	vault := t.TempDir()
+	store := fakeStore{objects: map[string]string{
+		"Readest/library.json":             `[{"hash":"book-1","title":"A Book"}]`,
+		"Readest/books/book-1/config.json": `{"bookHash":"book-1"}`,
+	}}
+	syncer := Syncer{
+		Store:       store,
+		Prefix:      "Readest",
+		Vault:       vault,
+		NotesFolder: "Readest",
+	}
+	if err := syncer.Process(context.Background(), events.Record{EventName: "ObjectCreated:Put", S3: events.S3Record{Object: events.Object{Key: "Readest/books/book-1/config.json"}}}); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := os.Stat(filepath.Join(vault, "Readest", "A Book [book-1].md")); err != nil {
+		t.Fatal(err)
+	}
+}
+
 func TestRenderEscapesFrontmatterAndSkipsDeletedNotes(t *testing.T) {
 	content := Render(Book{Hash: "hash", Title: `A "Book"`}, Config{Booknotes: []Note{{ID: "deleted", Text: "hidden", DeletedAt: ptr(1)}}})
 	if !strings.Contains(content, `title: "A \"Book\""`) || strings.Contains(content, "hidden") {

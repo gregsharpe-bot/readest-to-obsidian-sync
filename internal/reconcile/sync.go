@@ -61,6 +61,7 @@ type CommandRunner func(context.Context, string, ...string) error
 type Syncer struct {
 	Store       ObjectStore
 	Bucket      string
+	Prefix      string
 	Vault       string
 	NotesFolder string
 	RunCommand  CommandRunner
@@ -74,16 +75,16 @@ func (s Syncer) Process(ctx context.Context, record events.Record) error {
 }
 
 func (s Syncer) Sync(ctx context.Context, record events.Record) error {
-	hash, err := bookHashFromKey(record.S3.Object.Key)
+	hash, err := bookHashFromKey(record.S3.Object.Key, s.Prefix)
 	if err != nil {
 		return err
 	}
 	var library []Book
 	var envelope libraryEnvelope
-	if err := s.readJSON(ctx, "library.json", &envelope); err == nil {
+	if err := s.readJSON(ctx, s.objectKey("library.json"), &envelope); err == nil {
 		library = envelope.Books
 	} else {
-		if err := s.readJSON(ctx, "library.json", &library); err != nil {
+		if err := s.readJSON(ctx, s.objectKey("library.json"), &library); err != nil {
 			return fmt.Errorf("read library.json: %w", err)
 		}
 	}
@@ -101,7 +102,7 @@ func (s Syncer) Sync(ctx context.Context, record events.Record) error {
 		return nil
 	}
 	var config Config
-	if err := s.readJSON(ctx, hash+"/config.json", &config); err != nil {
+	if err := s.readJSON(ctx, s.bookObjectKey(hash), &config); err != nil {
 		return fmt.Errorf("read %s/config.json: %w", hash, err)
 	}
 	if config.BookHash != "" && config.BookHash != hash {
@@ -119,6 +120,21 @@ func (s Syncer) Sync(ctx context.Context, record events.Record) error {
 	return nil
 }
 
+func (s Syncer) objectKey(key string) string {
+	if s.Prefix == "" {
+		return key
+	}
+	return strings.Trim(s.Prefix, "/") + "/" + key
+}
+
+func (s Syncer) bookObjectKey(hash string) string {
+	key := hash + "/config.json"
+	if s.Prefix != "" {
+		key = "books/" + key
+	}
+	return s.objectKey(key)
+}
+
 func (s Syncer) readJSON(ctx context.Context, key string, target any) error {
 	output, err := s.Store.GetObject(ctx, &awss3.GetObjectInput{Bucket: &s.Bucket, Key: &key})
 	if err != nil {
@@ -134,8 +150,18 @@ func (s Syncer) readJSON(ctx context.Context, key string, target any) error {
 
 var hashPattern = regexp.MustCompile(`^[A-Za-z0-9_-]+$`)
 
-func bookHashFromKey(key string) (string, error) {
-	parts := strings.Split(strings.TrimPrefix(key, "/"), "/")
+func bookHashFromKey(key, prefix string) (string, error) {
+	key = strings.TrimPrefix(key, "/")
+	prefix = strings.Trim(prefix, "/")
+	if prefix != "" {
+		prefixWithSeparator := prefix + "/"
+		if !strings.HasPrefix(key, prefixWithSeparator) {
+			return "", fmt.Errorf("unsupported Readest object key %q", key)
+		}
+		key = strings.TrimPrefix(key, prefixWithSeparator)
+	}
+	key = strings.TrimPrefix(key, "books/")
+	parts := strings.Split(key, "/")
 	if len(parts) < 2 || parts[1] != "config.json" || !hashPattern.MatchString(parts[0]) {
 		return "", fmt.Errorf("unsupported Readest object key %q", key)
 	}

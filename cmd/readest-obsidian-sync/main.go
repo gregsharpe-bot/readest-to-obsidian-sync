@@ -41,6 +41,7 @@ func main() {
 		Processor: reconcile.Syncer{
 			Store:       awss3.NewFromConfig(awsCfg),
 			Bucket:      cfg.S3Bucket,
+			Prefix:      cfg.S3Prefix,
 			Vault:       cfg.ObsidianVault,
 			NotesFolder: cfg.NotesFolder,
 			RunCommand:  reconcile.ExecCommand,
