@@ -113,6 +113,9 @@ func (s Syncer) Sync(ctx context.Context, record events.Record) error {
 		return err
 	}
 	if s.RunCommand != nil {
+		if err := s.RunCommand(ctx, "sync-config", "--path", s.Vault, "--excluded-folders", "lost+found"); err != nil {
+			return fmt.Errorf("configure Obsidian sync exclusions: %w", err)
+		}
 		if err := s.RunCommand(ctx, "sync", "--path", s.Vault); err != nil {
 			return fmt.Errorf("sync Obsidian vault: %w", err)
 		}

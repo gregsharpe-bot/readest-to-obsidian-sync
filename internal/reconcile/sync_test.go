@@ -35,7 +35,7 @@ func TestSyncWritesBookNoteAndRunsObsidianSync(t *testing.T) {
 		Vault:       vault,
 		NotesFolder: "Readest",
 		RunCommand: func(_ context.Context, name string, args ...string) error {
-			command = name + " " + args[0] + " " + args[1]
+			command += name + " " + strings.Join(args, " ") + "\n"
 			return nil
 		},
 	}
@@ -51,8 +51,8 @@ func TestSyncWritesBookNoteAndRunsObsidianSync(t *testing.T) {
 	if !containsAll(content, "title: \"A Book\"", "A useful quote", "My thought", "page: 12") {
 		t.Fatalf("note content missing expected fields:\n%s", content)
 	}
-	if strings.Contains(content, "Do not show") || command != "sync --path "+vault {
-		t.Fatalf("unexpected deleted note or command: %q\n%s", command, content)
+	if strings.Contains(content, "Do not show") || !containsAll(command, "sync-config --path "+vault+" --excluded-folders lost+found", "sync --path "+vault) {
+		t.Fatalf("unexpected deleted note or commands: %q\n%s", command, content)
 	}
 }
 
